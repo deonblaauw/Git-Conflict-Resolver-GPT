@@ -1,7 +1,3 @@
-Here’s a refined version of your README for the Git Conflict Resolver project, with added details on setup and usage:
-
----
-
 # Git Conflict Resolver - GPT
 
 An automatic Git conflict resolver powered by large language models (LLMs), designed to streamline the conflict resolution process in version control systems. This tool leverages both Ollama's Llama3.2 model and OpenAI's API to provide intelligent suggestions for merging conflicting code changes.
