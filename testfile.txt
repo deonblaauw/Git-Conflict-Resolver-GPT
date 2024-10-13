@@ -5,8 +5,9 @@ def generate_random_numbers(n):
     return random_numbers
 
 if __name__ == "__main__":
-    n = 10
-    random_numbers = generate_random_numbers(n)
+    n = 107
+    
     total_sum = sum(random_numbers)
     print(f"The random numbers are: {random_numbers}")
+    random_numbers = generate_random_numbers(n)
     print(f"The sum of the random numbers is: {total_sum}")
