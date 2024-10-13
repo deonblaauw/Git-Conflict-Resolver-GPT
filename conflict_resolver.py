@@ -19,7 +19,7 @@ def display_changes(conflict_text, resolved_text):
     print("\n------------------------\n")
 
 # Resolve the conflict using Ollama's LLM
-def resolve_with_ollama(conflict_text, model=DEFAULT_OLLAMA_MODEL):
+def resolve_with_ollama(conflict_text, model=DEFAULT_OLLAMA_MODEL, additional_instructions=None):
     # Craft a prompt for the LLM to merge the conflicts
     prompt = (
         "You are a code reviewer and need to resolve a Git merge conflict. "
@@ -27,6 +27,12 @@ def resolve_with_ollama(conflict_text, model=DEFAULT_OLLAMA_MODEL):
         f"{conflict_text}\n\n"
         "Please merge the changes appropriately and provide a final version of the text that includes parts from both sides, "
         "removing the conflict markers and making it coherent.\n\n"
+    )
+    
+    if additional_instructions:
+        prompt += f"Additionally, here are the instructions to consider: {additional_instructions}\n\n"
+
+    prompt += (
         "Strictly output the script in a JSON format like below, and only provide a parsable JSON object with the key 'output'.\n\n"
         "# Output\n"
         f'{{"output": "Here is the output of the merged files ..."}}'
@@ -56,7 +62,7 @@ def resolve_with_ollama(conflict_text, model=DEFAULT_OLLAMA_MODEL):
         return None  # Return None to indicate failure
 
 # Resolve the conflict using OpenAI's API
-def resolve_with_openai(conflict_text, model=DEFAULT_OPENAI_MODEL):
+def resolve_with_openai(conflict_text, model=DEFAULT_OPENAI_MODEL, additional_instructions=None):
     # Craft a prompt for the LLM to merge the conflicts
     prompt = (
         "You are a code reviewer and need to resolve a Git merge conflict. "
@@ -64,6 +70,12 @@ def resolve_with_openai(conflict_text, model=DEFAULT_OPENAI_MODEL):
         f"{conflict_text}\n\n"
         "Please merge the changes appropriately and provide a final version of the text that includes parts from both sides, "
         "removing the conflict markers and making it coherent.\n\n"
+    )
+
+    if additional_instructions:
+        prompt += f"Additionally, here are the instructions to consider: {additional_instructions}\n\n"
+
+    prompt += (
         "Strictly output the script in a JSON format like below, and only provide a parsable JSON object with the key 'output'.\n\n"
         "# Output\n"
         f'{{"output": "Here is the output of the merged files ..."}}'
@@ -99,16 +111,16 @@ def resolve_with_openai(conflict_text, model=DEFAULT_OPENAI_MODEL):
 
 
 # Choose which service to use for resolving conflicts
-def resolve_conflict(conflict_text, service="ollama", model=None):
+def resolve_conflict(conflict_text, service="ollama", model=None, additional_instructions=None):
     if service == "ollama":
         model = model or DEFAULT_OLLAMA_MODEL
-        resolved_text = resolve_with_ollama(conflict_text, model)
+        resolved_text = resolve_with_ollama(conflict_text, model, additional_instructions)
         if resolved_text:
             display_changes(conflict_text, resolved_text)  # Display the changes and resolution
         return resolved_text
     elif service == "openai":
         model = model or DEFAULT_OPENAI_MODEL
-        resolved_text = resolve_with_openai(conflict_text, model)
+        resolved_text = resolve_with_openai(conflict_text, model, additional_instructions)
         if resolved_text:
             display_changes(conflict_text, resolved_text)  # Display the changes and resolution
         return resolved_text
@@ -120,18 +132,27 @@ def main(service="ollama", model=None):
     with open('testfile.txt', 'r') as file:
         conflict_text = file.read()
 
-    # Resolve the conflict
-    resolved_text = resolve_conflict(conflict_text, service, model)
+    resolved_text = None
+    additional_instructions = None
+    while resolved_text is None:
+        # Resolve the conflict
+        resolved_text = resolve_conflict(conflict_text, service, model, additional_instructions)
 
-    if resolved_text:  # Proceed only if a resolution was returned
-        # Prompt user for confirmation to write changes
-        confirm = input("Do you want to apply this resolution to the file? (yes/no): ").strip().lower()
-        if confirm == 'yes':
+        # Prompt user for additional instructions or confirmation to apply changes
+        user_input = input("Do you want to apply this resolution to the file? (yes to apply, enter additional instructions to modify, or exit to quit): ").strip()
+
+        if user_input.lower() == 'yes':
             with open('testfile.txt', 'w') as file:
                 file.write(resolved_text)
             print("Changes applied to testfile.txt.")
+            break  # Exit the loop if changes are applied
+        elif user_input.lower() == 'exit':
+            break;
         else:
-            print("No changes applied.")
+            # Use the user's input as additional instructions
+            resolved_text = None  # Reset resolved_text to trigger another resolution attempt
+            additional_instructions = user_input
+
     else:
         print("Could not resolve the conflict.")
 
