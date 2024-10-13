@@ -1,6 +1,6 @@
 import random
 
-def generate_rnd_numbers(n):
+def generate_random_numbers(n):
     random_numbers = [random.randint(1, 100) for _ in range(n)]
     return random_numbers
 
