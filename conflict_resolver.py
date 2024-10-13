@@ -10,6 +10,9 @@ from utility.utils import fix_json_content, fix_json
 DEFAULT_OLLAMA_MODEL = "llama3.2"
 DEFAULT_OPENAI_MODEL = "gpt-4o"
 
+# Common file types to scan for merge conflicts
+COMMON_FILE_TYPES = ['.py', '.js', '.java', '.cpp', '.html', '.css', '.php', '.rb', '.go', '.sh' , '.txt']
+
 # Function to display changes and resolution
 def display_changes(conflict_text, resolved_text):
     print("\n--- Conflict Changes ---")
@@ -109,7 +112,6 @@ def resolve_with_openai(conflict_text, model=DEFAULT_OPENAI_MODEL, additional_in
         print(f"Raw content: {resolved_text}")
         return None  # Return None to indicate failure
 
-
 # Choose which service to use for resolving conflicts
 def resolve_conflict(conflict_text, service="ollama", model=None, additional_instructions=None):
     if service == "ollama":
@@ -127,35 +129,33 @@ def resolve_conflict(conflict_text, service="ollama", model=None, additional_ins
     else:
         raise ValueError(f"Unknown service: {service}")
 
+# Scan directory and subdirectories for files with merge conflicts
+def scan_for_merge_conflicts(directory, service, model):
+    for root, _, files in os.walk(directory):
+        for file in files:
+            # Check for common file types
+            if any(file.endswith(ext) for ext in COMMON_FILE_TYPES):
+                file_path = os.path.join(root, file)
+                try:
+                    with open(file_path, 'r') as f:
+                        content = f.read()
+                    
+                    # Check for merge conflict markers
+                    if '<<<<<<<' in content and '=======' in content and '>>>>>>>' in content:
+                        print(f"\nFound merge conflict in: {file_path}")
+                        resolved_text = resolve_conflict(content, service, model)
+                        if resolved_text:
+                            # Save the resolved content back to the file
+                            with open(file_path, 'w') as f:
+                                f.write(resolved_text)
+                            print(f"Resolved merge conflict in: {file_path}")
+                except Exception as e:
+                    print(f"Error reading file {file_path}: {e}")
+
 def main(service="openai", model=None):
     print("Using ", service , " running ", model)
-    # Load the conflict text from the file
-    with open('testfile.txt', 'r') as file:
-        conflict_text = file.read()
-
-    resolved_text = None
-    additional_instructions = None
-    while resolved_text is None:
-        # Resolve the conflict
-        resolved_text = resolve_conflict(conflict_text, service, model, additional_instructions)
-
-        # Prompt user for additional instructions or confirmation to apply changes
-        user_input = input("Do you want to apply this resolution to the file? (yes to apply, enter additional instructions to modify, or exit to quit): ").strip()
-
-        if user_input.lower() == 'yes':
-            with open('testfile.txt', 'w') as file:
-                file.write(resolved_text)
-            print("Changes applied to testfile.txt.")
-            break  # Exit the loop if changes are applied
-        elif user_input.lower() == 'exit':
-            break;
-        else:
-            # Use the user's input as additional instructions
-            resolved_text = None  # Reset resolved_text to trigger another resolution attempt
-            additional_instructions = user_input
-
-    else:
-        print("Could not resolve the conflict.")
+    # Scan the current directory for merge conflicts
+    scan_for_merge_conflicts(os.getcwd(), service, model)
 
 if __name__ == "__main__":
     import argparse
