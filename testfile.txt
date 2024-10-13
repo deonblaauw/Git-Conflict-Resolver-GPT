@@ -5,6 +5,7 @@ def generate_squares(n):
     return squares
 
 if __name__ == "__main__":
-    n = 10
+    n = 100
     squares = generate_squares(n)
+    squares = generate_squares(squares)
     print(f"The squares of the first {n} natural numbers are: {squares}")
