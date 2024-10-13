@@ -128,6 +128,7 @@ def resolve_conflict(conflict_text, service="ollama", model=None, additional_ins
         raise ValueError(f"Unknown service: {service}")
 
 def main(service="ollama", model=None):
+    print("Using ", service , " running ", model)
     # Load the conflict text from the file
     with open('testfile.txt', 'r') as file:
         conflict_text = file.read()
@@ -161,7 +162,7 @@ if __name__ == "__main__":
 
     # Command-line arguments
     parser = argparse.ArgumentParser(description="Resolve git conflicts using LLMs.")
-    parser.add_argument("--service", choices=["ollama", "openai"], default="openai", help="Select the service to use (ollama or openai)")
+    parser.add_argument("--service", choices=["ollama", "openai"], default="ollama", help="Select the service to use (ollama or openai)")
     parser.add_argument("--model", help="Specify the model to use for conflict resolution")
     args = parser.parse_args()
 
